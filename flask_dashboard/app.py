@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, Response, jsonify
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # Use non-GUI backend for server deployment
 import matplotlib.pyplot as plt
 import seaborn as sns
 from prophet import Prophet
@@ -17,10 +19,14 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Set maximum upload file size (16 MB)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
 def plot_to_img(fig):
     img = io.BytesIO()
-    fig.savefig(img, format='png', bbox_inches='tight')  # Ensure plots are not cropped
+    fig.savefig(img, format='png', bbox_inches='tight')
     img.seek(0)
+    plt.close(fig)  # Close figure to free memory
     return base64.b64encode(img.getvalue()).decode()
 
 def generate_forecast(df, progress_callback=None):
@@ -383,15 +389,10 @@ def download_quarterly_activity(filename):
     return send_file(excel_path, as_attachment=True, download_name="quarterly_activity.xlsx")
 
 if __name__ == "__main__":
-    import webbrowser
-    from threading import Timer
-
-    # Open the browser after a delay
-    def open_browser():
-        webbrowser.open_new("http://127.0.0.1:5000")
-
-    # Wait 3 seconds before opening the browser
-    Timer(3, open_browser).start()
-
-    # Run the Flask app
-    app.run()
+    # Get port from environment variable (for Render.com deployment)
+    port = int(os.environ.get("PORT", 5000))
+    
+    # Run Flask app
+    # host='0.0.0.0' allows external access
+    # debug=False for production
+    app.run(host='0.0.0.0', port=port, debug=False)
