@@ -5,4 +5,4 @@ seaborn
 prophet
 tqdm
 openpyxl
-pyinstaller
+gunicorn
