@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.Python
+venv/
+.venv/
+uploads/
+*.csv
+*.xlsx
+run_app.bat
+dovechem_logo_iuP_icon.ico
