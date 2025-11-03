@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Dashboard - Sales Analysis</title>
+    <link rel="icon" href="{{ url_for('static', filename='dovechem_logo_iuP_icon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .loading-container {
+            text-align: center;
+        }
+        
+        .quick-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            animation: bounce 1.5s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+        
+        .loading-steps {
+            margin: 30px 0;
+            text-align: left;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .loading-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 20px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .loading-step.completed {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        
+        .loading-step.active {
+            background: #e3f2fd;
+            border-left: 4px solid #007bff;
+            animation: pulse 2s infinite;
+        }
+        
+        .step-icon {
+            font-size: 24px;
+        }
+        
+        .step-text {
+            flex: 1;
+            font-size: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .step-status {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loading-container">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                Upload Complete → <span>Loading Dashboard</span>
+            </div>
+            
+            <div class="quick-icon">⚡</div>
+            <h2>Loading Dashboard</h2>
+            <p>Preparing your analytics dashboard...</p>
+            
+            <!-- Loading Steps -->
+            <div class="loading-steps">
+                <div class="loading-step completed" id="step1">
+                    <div class="step-icon">📊</div>
+                    <div class="step-text">Reading data file</div>
+                    <div class="step-status">✓</div>
+                </div>
+                <div class="loading-step active" id="step2">
+                    <div class="step-icon">📈</div>
+                    <div class="step-text">Generating visualizations</div>
+                    <div class="step-status">
+                        <div class="loader" style="width: 20px; height: 20px; border-width: 3px;"></div>
+                    </div>
+                </div>
+                <div class="loading-step" id="step3">
+                    <div class="step-icon">🎯</div>
+                    <div class="step-text">Calculating metrics</div>
+                    <div class="step-status">⏳</div>
+                </div>
+                <div class="loading-step" id="step4">
+                    <div class="step-icon">✨</div>
+                    <div class="step-text">Finalizing dashboard</div>
+                    <div class="step-status">⏳</div>
+                </div>
+            </div>
+            
+            <div class="info-banner">
+                <span>ℹ️</span>
+                <span>Loading in <strong>Quick Mode</strong> - No AI training required</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const filename = "{{ filename }}";
+        let currentStep = 1;
+        
+        // Simulate loading steps
+        function updateSteps() {
+            const steps = [
+                { id: 'step2', duration: 800 },
+                { id: 'step3', duration: 600 },
+                { id: 'step4', duration: 400 }
+            ];
+            
+            let delay = 0;
+            
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    const stepElement = document.getElementById(step.id);
+                    stepElement.classList.remove('active');
+                    stepElement.classList.add('completed');
+                    stepElement.querySelector('.step-status').textContent = '✓';
+                    
+                    if (index < steps.length - 1) {
+                        const nextStep = document.getElementById(steps[index + 1].id);
+                        nextStep.classList.add('active');
+                        const nextLoader = `<div class="loader" style="width: 20px; height: 20px; border-width: 3px;"></div>`;
+                        nextStep.querySelector('.step-status').innerHTML = nextLoader;
+                    }
+                }, delay);
+                
+                delay += step.duration;
+            });
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = `/dashboard/${filename}?train=false`;
+            }, delay + 500);
+        }
+        
+        // Start loading sequence
+        setTimeout(updateSteps, 500);
+    </script>
+</body>
+</html>

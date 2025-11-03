@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Model - Sales Analysis Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='dovechem_logo_iuP_icon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .loading-container {
+            text-align: center;
+        }
+        
+        .progress-wrapper {
+            margin: 30px 0;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .progress-percentage {
+            font-size: 32px;
+            font-weight: 700;
+            color: #007bff;
+            margin: 20px 0;
+        }
+        
+        .status-steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .status-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-icon {
+            background: #007bff;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .step.completed .step-icon {
+            background: #28a745;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .step.active .step-label {
+            color: #007bff;
+            font-weight: 600;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+            }
+        }
+        
+        .estimated-time {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 8px;
+            color: #856404;
+            font-size: 14px;
+        }
+        
+        .fun-facts {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            text-align: left;
+        }
+        
+        .fun-facts h4 {
+            color: #007bff;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .fun-facts p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loading-container">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                Upload Complete → <span>Training Model</span> → Dashboard
+            </div>
+            
+            <h2>🤖 Training AI Model</h2>
+            <p>Please wait while we analyze your data and generate forecasts</p>
+            
+            <!-- Circular Loader -->
+            <div class="loader"></div>
+            
+            <!-- Progress Percentage -->
+            <div class="progress-percentage" id="progressPercentage">0%</div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-wrapper">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar">0%</div>
+                </div>
+            </div>
+            
+            <!-- Status Steps -->
+            <div class="status-steps">
+                <div class="step active" id="step1">
+                    <div class="step-icon">1</div>
+                    <div class="step-label">Preparing Data</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-icon">2</div>
+                    <div class="step-label">Training Model</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-icon">3</div>
+                    <div class="step-label">Generating Forecasts</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-icon">4</div>
+                    <div class="step-label">Finalizing</div>
+                </div>
+            </div>
+            
+            <!-- Current Status Message -->
+            <div class="loading-text" id="loadingText">Initializing Prophet model...</div>
+            
+            <!-- Estimated Time -->
+            <div class="estimated-time">
+                ⏱️ <strong>Estimated time:</strong> <span id="estimatedTime">2-5 minutes</span>
+            </div>
+            
+            <!-- Fun Facts While Waiting -->
+            <div class="fun-facts">
+                <h4>💡 Did you know?</h4>
+                <p id="funFact">Prophet is an open-source forecasting tool developed by Facebook's Data Science team, designed to handle time series data with strong seasonal patterns.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const filename = "{{ filename }}";
+        const progressBar = document.getElementById('progressBar');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const loadingText = document.getElementById('loadingText');
+        
+        const funFacts = [
+            "Prophet is an open-source forecasting tool developed by Facebook's Data Science team, designed to handle time series data with strong seasonal patterns.",
+            "The Prophet model automatically detects changepoints in your data, adapting to shifts in trends over time.",
+            "Prophet works best with daily or monthly data that has at least a year of historical observations.",
+            "The forecasting algorithm can handle missing data and outliers gracefully, making it robust for real-world scenarios.",
+            "Prophet uses an additive model where non-linear trends are fit with yearly, weekly, and daily seasonality."
+        ];
+        
+        let currentFactIndex = 0;
+        
+        // Rotate fun facts every 8 seconds
+        setInterval(() => {
+            currentFactIndex = (currentFactIndex + 1) % funFacts.length;
+            document.getElementById('funFact').textContent = funFacts[currentFactIndex];
+        }, 8000);
+        
+        // Update status messages based on progress
+        function updateStatus(progress) {
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+            const step4 = document.getElementById('step4');
+            
+            // Remove all active classes
+            [step1, step2, step3, step4].forEach(s => {
+                s.classList.remove('active');
+                s.classList.remove('completed');
+            });
+            
+            if (progress < 25) {
+                step1.classList.add('active');
+                loadingText.textContent = 'Preparing data and initializing model...';
+            } else if (progress < 50) {
+                step1.classList.add('completed');
+                step2.classList.add('active');
+                loadingText.textContent = 'Training Prophet model on your data...';
+            } else if (progress < 90) {
+                step1.classList.add('completed');
+                step2.classList.add('completed');
+                step3.classList.add('active');
+                loadingText.textContent = 'Generating 12-month forecasts...';
+            } else {
+                step1.classList.add('completed');
+                step2.classList.add('completed');
+                step3.classList.add('completed');
+                step4.classList.add('active');
+                loadingText.textContent = 'Finalizing results and preparing dashboard...';
+            }
+        }
+
+        // Create an EventSource to listen for progress updates
+        const eventSource = new EventSource(`/progress/${filename}`);
+
+        eventSource.onmessage = function(event) {
+            const progress = parseInt(event.data);
+            
+            // Update progress bar and percentage
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+            progressPercentage.textContent = progress + '%';
+            
+            // Update status
+            updateStatus(progress);
+
+            // Redirect to dashboard when training is complete
+            if (progress === 100) {
+                loadingText.textContent = '✅ Training complete! Redirecting to dashboard...';
+                document.querySelectorAll('.step').forEach(s => s.classList.add('completed'));
+                
+                eventSource.close(); // Close the connection
+                setTimeout(() => {
+                    window.location.href = `/dashboard/${filename}?train=true`;
+                }, 1500);
+            }
+        };
+
+        // Handle connection errors - Simple Error Handling
+        eventSource.onerror = function() {
+            eventSource.close();
+            loadingText.textContent = '❌ Connection error. Please refresh the page or try again.';
+            loadingText.style.color = '#dc3545';
+        };
+        
+        // Prevent accidental navigation away - Support Internal Locus of Control
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = 'Model training is in progress. Are you sure you want to leave?';
+        });
+    </script>
+</body>
+</html>

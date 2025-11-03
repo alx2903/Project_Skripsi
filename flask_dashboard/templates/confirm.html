@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Training - Sales Analysis Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='dovechem_logo_iuP_icon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .success-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            animation: scaleIn 0.5s ease;
+        }
+        
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .info-card h3 {
+            color: #007bff;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .info-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .option-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .option-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.15);
+            transform: translateY(-3px);
+        }
+        
+        .option-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        
+        .option-card p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .option-card ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .option-card ul li {
+            padding: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .option-card ul li::before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .options-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .recommended-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .keyboard-hint {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #999;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Success Feedback -->
+        <div class="success-icon">✅</div>
+        <h2>File Uploaded Successfully!</h2>
+        <p>Your file has been uploaded and is ready for processing</p>
+        
+        <!-- Breadcrumb - Reduce Short-term Memory Load -->
+        <div class="breadcrumb">
+            <span>Upload Complete</span> → Choose Analysis Option
+        </div>
+        
+        <!-- File Information -->
+        <div class="info-card">
+            <h3>📄 Uploaded File Information</h3>
+            <ul class="info-list">
+                <li>📁 <strong>Filename:</strong> {{ filename }}</li>
+                <li>⏱️ <strong>Status:</strong> Ready for analysis</li>
+            </ul>
+        </div>
+        
+        <!-- Training Options with Clear Descriptions -->
+        <h3 style="text-align: center; margin-top: 30px;">Choose Your Analysis Option</h3>
+        
+        <div class="options-container">
+            <!-- Option 1: With Training -->
+            <div class="option-card" onclick="redirectToLoading()" tabindex="0" onkeypress="handleKeyPress(event, 'train')">
+                <h4>🤖 Full Analysis with AI Forecasting <span class="recommended-badge">RECOMMENDED</span></h4>
+                <p>Train a Prophet model to generate 12-month sales forecasts</p>
+                <ul>
+                    <li>AI-powered sales predictions</li>
+                    <li>Customer & item-level forecasts</li>
+                    <li>Downloadable forecast data</li>
+                    <li>Complete dashboard insights</li>
+                </ul>
+                <button class="success">Train Model & Analyze</button>
+                <p style="margin-top: 10px; font-size: 12px; color: #999;">⏱️ Processing time: 2-5 minutes</p>
+            </div>
+            
+            <!-- Option 2: Without Training -->
+            <div class="option-card" onclick="redirectToLoadingNoTraining()" tabindex="0" onkeypress="handleKeyPress(event, 'skip')">
+                <h4>📊 Quick Dashboard Only</h4>
+                <p>View insights immediately without AI forecasting</p>
+                <ul>
+                    <li>Top customers analysis</li>
+                    <li>Top items & cities</li>
+                    <li>Sales performance metrics</li>
+                    <li>Quarterly customer activity</li>
+                </ul>
+                <button class="secondary">Skip Training & View Dashboard</button>
+                <p style="margin-top: 10px; font-size: 12px; color: #999;">⚡ Instant access</p>
+            </div>
+        </div>
+        
+        <!-- Keyboard Shortcuts Hint -->
+        <p class="keyboard-hint">💡 Tip: Press <strong>1</strong> for Full Analysis or <strong>2</strong> for Quick Dashboard</p>
+        
+        <!-- Status Message Area -->
+        <div id="statusMessage" style="display: none;"></div>
+    </div>
+
+    <script>
+        const filename = "{{ filename }}";
+
+        // Support Internal Locus of Control - Give users clear options
+        function redirectToLoading() {
+            showFeedback('Starting AI model training... This may take a few minutes');
+            setTimeout(() => {
+                window.location.href = `/loading/${filename}`;
+            }, 1000);
+        }
+
+        function redirectToLoadingNoTraining() {
+            showFeedback('Loading dashboard...');
+            setTimeout(() => {
+                window.location.href = `/loading_no_training/${filename}`;
+            }, 800);
+        }
+
+        function showFeedback(message) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = 'status-message info';
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'flex';
+        }
+
+        // Enable Frequent Users to Use Shortcuts - Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '1') {
+                redirectToLoading();
+            } else if (e.key === '2') {
+                redirectToLoadingNoTraining();
+            } else if (e.key === 'Escape') {
+                // Easy Reversal of Actions - Go back
+                window.history.back();
+            }
+        });
+
+        // Handle Enter key on option cards
+        function handleKeyPress(event, action) {
+            if (event.key === 'Enter') {
+                if (action === 'train') {
+                    redirectToLoading();
+                } else {
+                    redirectToLoadingNoTraining();
+                }
+            }
+        }
+
+        // Add hover effect for accessibility
+        const optionCards = document.querySelectorAll('.option-card');
+        optionCards.forEach(card => {
+            card.addEventListener('focus', function() {
+                this.style.borderColor = '#007bff';
+                this.style.boxShadow = '0 6px 12px rgba(0, 123, 255, 0.15)';
+            });
+            card.addEventListener('blur', function() {
+                this.style.borderColor = '#e0e0e0';
+                this.style.boxShadow = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

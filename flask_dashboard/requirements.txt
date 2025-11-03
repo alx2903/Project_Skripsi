@@ -1,0 +1,8 @@
+Flask
+pandas
+matplotlib
+seaborn
+prophet
+tqdm
+openpyxl
+pyinstaller

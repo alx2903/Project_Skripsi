@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard - Analytics & Insights</title>
+    <link rel="icon" href="{{ url_for('static', filename='dovechem_logo_iuP_icon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background: #f5f7fa;
+        }
+        
+        .dashboard-header {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        
+        .dashboard-header h2 {
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .dashboard-subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .action-buttons button,
+        .action-buttons a {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 6px;
+        }
+        
+        .menu {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        
+        .menu-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            display: block;
+            font-weight: 500;
+        }
+        
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .chart-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        .table-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .search-box {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            flex: 1;
+            max-width: 300px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .info-banner {
+            background: #e3f2fd;
+            border-left: 4px solid #007bff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-banner.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .keyboard-shortcuts {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 13px;
+            max-width: 250px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .keyboard-shortcuts.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .keyboard-shortcuts h4 {
+            margin-bottom: 10px;
+            color: #007bff;
+            font-size: 14px;
+        }
+        
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .shortcut-item:last-child {
+            border-bottom: none;
+        }
+        
+        .shortcut-key {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .help-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        
+        .help-button:hover {
+            background: #0056b3;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h2>📊 Sales Analytics Dashboard</h2>
+            <p class="dashboard-subtitle">File: <strong>{{ filename }}</strong> | Last Updated: <span id="currentDate"></span></p>
+            
+            {% if train_model %}
+            <div class="info-banner success">
+                <span>✅</span>
+                <span><strong>AI Model Trained Successfully!</strong> Your forecasts are ready to download.</span>
+            </div>
+            {% else %}
+            <div class="info-banner">
+                <span>ℹ️</span>
+                <span>Viewing dashboard in <strong>Quick Mode</strong>. Train the model for AI-powered forecasts.</span>
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <button onclick="window.location.href='/'" class="secondary">📤 Upload New File</button>
+                {% if train_model %}
+                <a href="{{ url_for('download_forecast', filename=filename) }}" class="download-button success">
+                    📥 Download Forecast
+                </a>
+                {% endif %}
+                <a href="{{ url_for('download_quarterly_activity', filename=filename) }}" class="download-button">
+                    📊 Download Activity Report
+                </a>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="menu">
+            <span class="menu-label">📈 Select Report:</span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button onclick="showContent('top-customers')" data-section="top-customers">Top 5 Customers</button>
+                <button onclick="showContent('top-items')" data-section="top-items">Top 10 Items</button>
+                <button onclick="showContent('top-cities')" data-section="top-cities">Top 10 Cities</button>
+                <button onclick="showContent('top-sales')" data-section="top-sales">Top 10 Salespeople</button>
+                <button onclick="showContent('quarterly-activity')" data-section="quarterly-activity">Customer Activity</button>
+                {% if train_model %}
+                <button onclick="showContent('forecast')" data-section="forecast">AI Forecast</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Content Sections -->
+        <div id="top-customers" class="content">
+            <h3>🏆 Top 5 Customers</h3>
+            <p style="color: #666; font-size: 14px;">Ranked by quantity purchased and sales value (IDR)</p>
+            <div class="chart-container">
+                <img src="data:image/png;base64,{{ top_customers_img }}" alt="Top Customers Chart">
+            </div>
+        </div>
+
+        <div id="top-items" class="content">
+            <h3>📦 Top 10 Most Purchased Items</h3>
+            <p style="color: #666; font-size: 14px;">Based on total quantity ordered across all customers</p>
+            <div class="chart-container">
+                <img src="data:image/png;base64,{{ top_items_img }}" alt="Top Items Chart">
+            </div>
+        </div>
+
+        <div id="top-cities" class="content">
+            <h3>🌍 Top 10 Cities by Shipment Count</h3>
+            <p style="color: #666; font-size: 14px;">Cities with the highest number of unique shipments</p>
+            <div class="chart-container">
+                <img src="data:image/png;base64,{{ top_cities_img }}" alt="Top Cities Chart">
+            </div>
+        </div>
+
+        <div id="top-sales" class="content">
+            <h3>💼 Top 10 Salespeople by Total Sales</h3>
+            <p style="color: #666; font-size: 14px;">Sales performance converted to IDR</p>
+            <div class="chart-container">
+                <img src="data:image/png;base64,{{ top_sales_img }}" alt="Top Salespeople Chart">
+            </div>
+        </div>
+
+        <!-- Quarterly Customer Activity -->
+        <div id="quarterly-activity" class="content">
+            <h3>📅 Quarterly Customer Activity</h3>
+            <p style="color: #666; font-size: 14px;">Track active and inactive customers per quarter</p>
+            
+            <div class="table-actions">
+                <input type="text" class="search-box" id="searchTable" placeholder="🔍 Search customers...">
+                <a href="{{ url_for('download_quarterly_activity', filename=filename) }}" class="download-button">
+                    📥 Download Excel
+                </a>
+            </div>
+            
+            <div class="table-wrapper">
+                <table id="activityTable">
+                    <thead>
+                        <tr>
+                            <th>Quarter</th>
+                            <th>Active Customers</th>
+                            <th>Inactive Customers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quarter in quarterly_activity %}
+                        <tr>
+                            <td><strong>{{ quarter.quarter }}</strong></td>
+                            <td>
+                                {% if quarter.active_customers %}
+                                <ul>
+                                    {% for customer in quarter.active_customers %}
+                                    <li>{{ customer }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <span style="color: #999;">No active customers</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if quarter.inactive_customers %}
+                                <ul>
+                                    {% for customer in quarter.inactive_customers %}
+                                    <li>{{ customer }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <span style="color: #999;">No inactive customers</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if train_model %}
+        <div id="forecast" class="content">
+            <h3>🤖 AI-Generated Sales Forecast</h3>
+            <p style="color: #666; font-size: 14px;">12-month predictions using Prophet ML model</p>
+            
+            <div class="info-banner">
+                <span>💡</span>
+                <span>The forecast includes predicted quantities with confidence intervals for each customer-item combination.</span>
+            </div>
+            
+            <div class="forecast-download">
+                <div class="empty-state-icon">📈</div>
+                <h4>Forecast Data Ready</h4>
+                <p>Download the complete forecast with predictions, upper and lower bounds for all customer-item pairs.</p>
+                <a href="{{ url_for('download_forecast', filename=filename) }}" class="download-button success">
+                    📥 Download Forecast CSV
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Help Button -->
+    <button class="help-button" onclick="toggleShortcuts()" title="Keyboard Shortcuts (Press ?)">?</button>
+    
+    <!-- Keyboard Shortcuts Panel -->
+    <div class="keyboard-shortcuts" id="shortcutsPanel">
+        <h4>⌨️ Keyboard Shortcuts</h4>
+        <div class="shortcut-item">
+            <span>Show help</span>
+            <span class="shortcut-key">?</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Customers</span>
+            <span class="shortcut-key">1</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Items</span>
+            <span class="shortcut-key">2</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Cities</span>
+            <span class="shortcut-key">3</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Salespeople</span>
+            <span class="shortcut-key">4</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Activity</span>
+            <span class="shortcut-key">5</span>
+        </div>
+        {% if train_model %}
+        <div class="shortcut-item">
+            <span>Forecast</span>
+            <span class="shortcut-key">6</span>
+        </div>
+        {% endif %}
+        <div class="shortcut-item">
+            <span>Search</span>
+            <span class="shortcut-key">/</span>
+        </div>
+    </div>
+
+    <script>
+        // Display current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Show content function with consistency
+        function showContent(id) {
+            document.querySelectorAll('.content').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            document.getElementById(id).classList.add('active');
+
+            document.querySelectorAll('.menu button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            const activeButton = document.querySelector(`.menu button[data-section="${id}"]`);
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
+
+            localStorage.setItem('selectedSection', id);
+            
+            // Scroll to top smoothly
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Load last selected section
+        const selectedSection = localStorage.getItem('selectedSection') || 'top-customers';
+        showContent(selectedSection);
+
+        // Table search functionality
+        const searchInput = document.getElementById('searchTable');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchValue = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('#activityTable tbody tr');
+                
+                tableRows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchValue) ? '' : 'none';
+                });
+            });
+        }
+
+        // Keyboard shortcuts - Enable Frequent Users to Use Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ignore if typing in input field
+            if (e.target.tagName === 'INPUT') {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                }
+                return;
+            }
+            
+            switch(e.key) {
+                case '1':
+                    showContent('top-customers');
+                    break;
+                case '2':
+                    showContent('top-items');
+                    break;
+                case '3':
+                    showContent('top-cities');
+                    break;
+                case '4':
+                    showContent('top-sales');
+                    break;
+                case '5':
+                    showContent('quarterly-activity');
+                    break;
+                case '6':
+                    // Check if forecast section exists
+                    if (document.getElementById('forecast')) {
+                        showContent('forecast');
+                    }
+                    break;
+                case '/':
+                    e.preventDefault();
+                    if (searchInput) searchInput.focus();
+                    break;
+                case '?':
+                    toggleShortcuts();
+                    break;
+            }
+        });
+
+        // Toggle shortcuts panel
+        function toggleShortcuts() {
+            const panel = document.getElementById('shortcutsPanel');
+            panel.classList.toggle('show');
+        }
+
+        // Close shortcuts when clicking outside
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('shortcutsPanel');
+            const helpButton = document.querySelector('.help-button');
+            
+            if (!panel.contains(e.target) && !helpButton.contains(e.target)) {
+                panel.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

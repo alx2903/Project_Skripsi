@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File - Sales Analysis Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='dovechem_logo_iuP_icon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+        
+        .supported-formats {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .supported-formats p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .help-text {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📊 Sales Analysis Dashboard</h2>
+        <p>Upload your Excel file to generate insights and forecasts</p>
+        
+        <form action="/" method="post" enctype="multipart/form-data" id="uploadForm">
+            <div class="file-input-wrapper">
+                <label for="file" class="file-input-label" id="fileLabel">
+                    <div>
+                        <div class="upload-icon">📁</div>
+                        <div class="file-info">
+                            <span id="fileText">Click or drag file here to upload</span>
+                        </div>
+                        <p class="help-text">Maximum file size: 50MB</p>
+                    </div>
+                </label>
+                <input type="file" name="file" id="file" required accept=".xlsx,.xls">
+            </div>
+            
+            <div class="supported-formats">
+                <p><strong>Supported formats:</strong> Excel (.xlsx, .xls)</p>
+                <p>Required columns: Date, Customer Name, Item Name, Quantity, Amount, Currency, City, Sales Name</p>
+            </div>
+            
+            <button type="submit" id="submitBtn" disabled>
+                <span id="btnText">Upload and Analyze</span>
+            </button>
+        </form>
+        
+        <div id="statusMessage" style="display: none;"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file');
+        const fileLabel = document.getElementById('fileLabel');
+        const fileText = document.getElementById('fileText');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // File selection handler - Informative Feedback
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            
+            if (file) {
+                // Validate file size (50MB max)
+                const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+                if (file.size > maxSize) {
+                    showStatus('File size exceeds 50MB. Please choose a smaller file.', 'warning');
+                    fileInput.value = '';
+                    submitBtn.disabled = true;
+                    return;
+                }
+                
+                // Validate file type
+                const validTypes = ['.xlsx', '.xls'];
+                const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+                if (!validTypes.includes(fileExt)) {
+                    showStatus('Invalid file format. Please upload an Excel file (.xlsx or .xls)', 'warning');
+                    fileInput.value = '';
+                    submitBtn.disabled = true;
+                    return;
+                }
+                
+                // Update UI
+                fileText.innerHTML = `<span class="file-name">✓ ${file.name}</span> (${formatFileSize(file.size)})`;
+                fileLabel.classList.add('has-file');
+                submitBtn.disabled = false;
+                hideStatus();
+            }
+        });
+
+        // Drag and drop handlers - Easy Reversal of Actions
+        fileLabel.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            fileLabel.style.borderColor = '#007bff';
+            fileLabel.style.background = '#e3f2fd';
+        });
+
+        fileLabel.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            if (!fileInput.files.length) {
+                fileLabel.style.borderColor = '#ddd';
+                fileLabel.style.background = '#f8f9fa';
+            }
+        });
+
+        fileLabel.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Form submission - Informative Feedback
+        uploadForm.addEventListener('submit', function(e) {
+            submitBtn.disabled = true;
+            document.getElementById('btnText').textContent = 'Uploading...';
+            showStatus('Uploading file, please wait...', 'info');
+        });
+
+        // Keyboard shortcut - Enable Frequent Users to Use Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + U to trigger file upload
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+
+        // Helper functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function showStatus(message, type) {
+            statusMessage.className = `status-message ${type}`;
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'flex';
+        }
+
+        function hideStatus() {
+            statusMessage.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
